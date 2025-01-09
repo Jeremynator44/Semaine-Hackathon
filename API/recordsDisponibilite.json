@@ -1,0 +1,23 @@
+{
+  "total_count": 18,
+  "results": [
+    { "disponible": 88, "nom": "Moliere" },
+    { "disponible": 16, "nom": "Maternite" },
+    { "disponible": 0, "nom": "Confluences" },
+    { "disponible": 178, "nom": "Saint Serge Patinoire" },
+    { "disponible": 75, "nom": "Mitterrand Rennes" },
+    { "disponible": 115, "nom": "Mitterrand Maine" },
+    { "disponible": 68, "nom": "Saint Laud 2" },
+    { "disponible": 91, "nom": "Bressigny" },
+    { "disponible": 84, "nom": "Marengo" },
+    { "disponible": 3, "nom": "Larrey" },
+    { "disponible": 140, "nom": "Quai" },
+    { "disponible": 137, "nom": "Ralliement" },
+    { "disponible": 214, "nom": "Republique" },
+    { "disponible": 166, "nom": "Mail" },
+    { "disponible": 27, "nom": "Saint Laud" },
+    { "disponible": 0, "nom": "Haras Public" },
+    { "disponible": 156, "nom": "Berges De Maine" },
+    { "disponible": 109, "nom": "Leclerc" }
+  ]
+}

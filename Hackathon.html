@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parking Angers</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script src="./Hackathon.js"></script>
+    <link rel="stylesheet" href="Hackathon.css">
+</head>
+<body>
+
+
+    <!--API Géolocalisation à ajouter-->
+    <form>
+        <fieldset>
+            <legend>Lieu</legend>
+            <div>
+                <input type="radio" id="Choix1" name="fav_language" value="velo" checked>
+                <label for="Choix1">Parkings vélos</label>
+
+                <input type="radio" id="Choix2" name="fav_language" value="voiture">
+                <label for="Choix2">Parkings voitures</label>
+
+                <input type="radio" id="Choix3" name="fav_language" value="installation">
+                <label for="Choix3">Installations Sportives</label>
+            </div>
+        </fieldset>
+    </form>
+
+
+    <div id="user-position">
+        <h3>Renseignez votre position :</h3>
+        <button id="get-location-btn">Utiliser ma position actuelle</button>
+        <br><br>
+        <label for="latitude">Latitude :</label>
+        <input type="text" id="latitude" placeholder="47.466671">
+        <br>
+        <label for="longitude">Longitude :</label>
+        <input type="text" id="longitude" placeholder="-0.55">
+        <br>
+        <button id="update-map-btn">Valider</button>
+    </div>
+    <div id="map"></div>
+
+    <select>
+        <option value='' disabled selected>Tarif et Horaire</option>
+        <optgroup label='Prix' disabled selected>
+            <option disabled>record.tarif_1h</option>
+            <option disabled>record.tarif_2h</option>
+            <option disabled>record.tarif_3h</option>
+            <option disabled>record.tarif_4h</option>
+            <option disabled>record.tarif_24h</option>
+        </optgroup>
+        <optgroup label='Horaire' disabled selected>
+            <option disabled>"+ record.accessibilite +"</option>
+        </optgroup>
+    </select>
+    
+
+    <script>
+
+        const MarqueurUser = L.icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', // Icône rouge
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', // Ombre du marqueur
+            iconSize: [25, 41], // Taille de l'icône
+            iconAnchor: [12, 41], // Point d'ancrage de l'icône (bas du marqueur)
+            popupAnchor: [1, -34], // Position du popup par rapport à l'icône
+            shadowSize: [41, 41] // Taille de l'ombre
+        });
+
+        const apiUrlVelo = "http://127.0.0.1:8080/recordsVelo.json";
+
+        const apiUrlInstallations = "http://127.0.0.1:8080/recordsInstallations.json";
+
+        const apiUrlVoiture = "http://127.0.0.1:8080/recordsStationnementVoiture.json";
+
+        const apiUrlDispo = "http://127.0.0.1:8080/recordsDisponibilite.json";
+
+        const Angers = {
+            lat: 47.466671,
+            lng: -0.55,
+        };
+        //Calcul des limites à 20 km autour d'Angers
+        const distanceKm = 20;
+        const R = 6371; // Rayon de la Terre en km
+
+        //Limites (latitude et longitude) basées sur le rayon de 20 km
+        const maxLat = Angers.lat + (distanceKm / R) * (180 / Math.PI);
+        const minLat = Angers.lat - (distanceKm / R) * (180 / Math.PI);
+        const maxLng = Angers.lng + (distanceKm / R) * (180 / Math.PI) / Math.cos(Angers.lat * Math.PI / 180);
+        const minLng = Angers.lng - (distanceKm / R) * (180 / Math.PI) / Math.cos(Angers.lat * Math.PI / 180);
+
+        const bounds = [[minLat, minLng], [maxLat, maxLng]]; // Rectangle des limites
+        const zoomLevel = 12;
+
+        //Initialisation de la carte
+        const map = L.map('map',{
+            maxBounds: bounds // Limiter la carte à 20 km autour d'Angers
+        }).setView([Angers.lat, Angers.lng], zoomLevel);
+
+        const mainLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            minZoom: 10,
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        });
+        mainLayer.addTo(map)
+
+        
+
+        // Fonction général pour ajouter des marqueurs quelque soit l'API
+        function AjoutMarqueur (apiUrl){
+            // Récupérer les données depuis l'API mise en paramètre
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    // Vérifier que des données sont disponibles
+                    if (data.results && data.results.length > 0) {
+                        // Parcourir les enregistrements et extraire les données quelque soit l'API
+                        data.results.forEach(record => {
+
+                            if (apiUrl != "http://127.0.0.1:8080/recordsStationnementVoiture.json") {
+                                const localisation = record.geo_shape.geometry.coordinates; // Extraire les coordonnées géographique de l'API
+
+                                // Vérifier que le champ localisation n'est pas vide
+                                if (localisation) {
+                                    if (apiUrl != "http://127.0.0.1:8080/recordsInstallations.json") {
+                                        const nom = record.nom_parkng;
+                                        const type = record.type;
+                                        const capacite = record.capacite;
+                                        const acces = record.acces;
+                                        const securise = "";
+                                        if (record.securise == "Oui") {
+                                            const securise = "Sécurisé";
+                                        } else {
+                                            const securise = "Non Sécurisé";
+                                        }
+                                        const adresse = record.id_voie + " " + record.voie;
+
+                                        // Création de marqueur
+                                        L.marker([localisation[1],localisation[0]]).addTo(map)
+                                            .bindPopup("<h3>"+ nom +"</h3><li>"+ type +"</li> <li>"+ acces +"</li> <li>"+ capacite +" places</li> <li>"+ securise +"</li> <li>"+ adresse +"</li>")
+                                            .openPopup();
+
+                                    } else {
+                                        const nom = record.nom_instal;
+                                        const equipement = record.nom_equip;
+                                        const sol = record.nat_sol;
+                                        const edifice = record.nat_libe;
+                                        const vestiaire = "";
+                                        if (record.vestiaire != 0 || record.vestiaire != null) {
+                                            const vestiaire = record.nb_vestiaire +" Vestiaire Disponible";
+                                        } else {
+                                            const vestiaire = "Pas de Vestiaire";
+                                        }
+                                        const activite = record.activite;
+
+                                        // Création de marqueur
+                                        L.marker([localisation[1],localisation[0]]).addTo(map)
+                                            .bindPopup("<h3>"+ nom +"</h3><li>"+ equipement +"</li> <li>"+ edifice +"</li> <li>Sol : "+ sol +"</li> <li>"+ vestiaire +"</li> <li>"+ activite +"</li>")
+                                            .openPopup();
+                                    }
+                                    
+                                }
+
+                            } else{
+                                const localisation = record.geo_point_2d; // Extraire les coordonnées géographique de l'API
+                                
+                                // Vérifier que le champ localisation n'est pas vide
+                                if (localisation) {
+                                    const [latitude, longitude] = localisation.split(',');
+                                    const nom = record.nom;
+                                    const adresse = record.adresse;
+                                    const places = record.nb_places;
+
+                                    var gratuit = "";
+                                    if (record.gratuit == "VRAI") {
+                                        gratuit = "Gratuit";
+                                    } else {
+                                        gratuit = "Payant";
+                                    }
+
+                                    var abo_resident = "";
+                                    if (record.abo_resident == null) {
+                                        abo_resident = "Aucun";
+                                    } else {
+                                        abo_resident = record.abo_resident +"€";
+                                    }
+
+                                    var abo_nonresident = "";
+                                    if (record.abo_non_resident == null) {
+                                        abo_nonresident = "Aucun";
+                                    } else {
+                                        abo_nonresident = record.abo_non_resident +"€";
+                                    }
+
+
+
+
+                                    // Création de marqueur
+                                    L.marker([latitude, longitude]).addTo(map)
+                                        .bindPopup("<h3>"+ nom +"</h3><li>"+ adresse +"</li> <li>"+ gratuit +"</li> <li>"+ places +" places totales</li> <li>Abonnement résident : "+ abo_resident +"</li> <li>Abonnement non résident : "+ abo_nonresident +"</li> <select><option value='' disabled selected>Tarif et Horaire</option><optgroup label='Prix' disabled selected><option disabled>"+ record.tarif_1h +"€ /1h</option><option disabled>"+ record.tarif_2h +"€ /2h</option><option disabled>"+ record.tarif_3h +"€ /3h</option><option disabled>"+ record.tarif_4h +"€ /4h</option><option disabled>"+ record.tarif_24h +"€ /24h</option></optgroup><optgroup label='Horaire' disabled selected><option disabled>"+ record.accessibilite +"</option></optgroup></select>")
+                                        .openPopup();
+                                }
+                            }
+                        });
+                        
+                    }
+                })
+                .catch(error => console.error('Erreur lors du chargement des données :', error));
+        }
+
+        // Fonction qui efface les anciens marqueurs
+        function EnleverMarqueur() {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+        
+
+        // Gérer le changement de sélection du bouton radio
+        const radios = document.getElementsByName("fav_language");
+
+
+        // Fonction qui met à jour la carte en fonction du bouton radio sélectionné
+        function UpdateMap() {
+            let selectedValue;
+            for (let radio of radios) {
+                if (radio.checked) {
+                    selectedValue = radio.value;
+                    break;
+                }
+            }
+
+            EnleverMarqueur(); // Effacer les anciens marqueurs
+
+
+            // Appel la fonction AjoutMarqueur en fonction du bouton radio sélectionné
+
+            if (selectedValue === "velo") {                     // Abris pour vélo
+                AjoutMarqueur(apiUrlVelo);
+            } else if (selectedValue === "voiture") {           // Stationnements pour voiture
+                AjoutMarqueur(apiUrlVoiture);
+            } else if (selectedValue === "installation") {      // Installations sportives
+                AjoutMarqueur(apiUrlInstallations);
+            }
+        }
+
+        // Ajout d'écouteurs d'événements sur les boutons radio
+        for (let radio of radios) {
+            radio.addEventListener("change", UpdateMap);
+        }
+
+        // Appel pour initialiser la carte avec les marqueurs par défaut (abris pour vélo)
+        UpdateMap();
+
+    </script>
+
+    <script>
+        const options = {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0,
+        };
+
+        document.getElementById("get-location-btn").addEventListener("click", () => {
+            navigator.geolocation.getCurrentPosition(success, error, options);
+        });
+
+        function success(pos) {
+            const crd = pos.coords;
+            document.getElementById("latitude").value = crd.latitude;
+            document.getElementById("longitude").value = crd.longitude;
+            alert("Position mise à jour !");
+            updateUserPosition();
+        }
+
+        function error(err) {
+            console.warn(`ERREUR (${err.code}): ${err.message}`);
+            alert("Impossible de récupérer la position actuelle. Vérifiez vos permissions ou saisissez une position manuellement.");
+        }
+
+        function updateUserPosition() {
+            const latitude = parseFloat(document.getElementById("latitude").value);
+            const longitude = parseFloat(document.getElementById("longitude").value);
+
+            if (!isNaN(latitude) && !isNaN(longitude)) {
+                // Centrer la carte sur la position entrée par l'utilisateur
+                map.setView([latitude, longitude], 12);
+
+                // Ajouter un marqueur sur la position de l'utilisateur
+                const userMarker = L.marker([latitude, longitude],{ icon: MarqueurUser }).addTo(map)
+                    .bindPopup("Votre position")
+                    .openPopup();
+
+                userMarker.on("click", () => {
+                    // Supprimer le cercle précédent, s'il existe
+                    if (window.userCircle) {
+                        map.removeLayer(window.userCircle);
+                    }
+
+                    // Ajouter un cercle de 1 km autour du marqueur utilisateur
+                    window.userCircle = L.circle([latitude, longitude], {
+                        color: 'red',      // Couleur du contour du cercle
+                        fillColor: '#FF0000', // Couleur de remplissage
+                        fillOpacity: 0.3,  // Opacité du remplissage
+                        radius: 1500      // Rayon en mètres (1,5 km)
+                    }).addTo(map);
+                });
+            } else {
+                alert("Veuillez entrer des coordonnées valides !");
+            }
+        }
+
+        document.getElementById("update-map-btn").addEventListener("click", updateUserPosition);
+    </script>
+
+
+    <br>
+    <h1>Liste des Activités Sportives à Angers</h1>
+    <p>Voici les activités disponibles :</p>
+    <select id="activities-select">
+        <option value="" disabled selected>Sélectionnez une activité</option>
+    </select>
+
+    <script>
+
+        // Création du tableau des activités
+        let tabActivite = [];
+
+        // Récupérer les données depuis l'API
+        fetch(apiUrlInstallations)
+            .then(response => response.json())
+            .then(data => {
+                const activitiesSelect = document.getElementById('activities-select');
+                
+                // Vérifier que des données sont disponibles
+                if (data.results && data.results.length > 0) {
+                    // Parcourir les enregistrements et extraire l'activité
+                    data.results.forEach(record => {
+                        const activity = record.activite; // Extraire l'activité
+                        
+
+                        // Vérifier que le champ "activite" existe, n'est pas vide et qu'il n'est pas déjà présent dans le tableau des activités
+                        if (activity) {
+                            const activities = activity.split(',');
+                            console.log(activities);
+
+                            for (let i = 0; i < activities.length; i++) {
+                                const activity = activities[i].trim();
+                                if (!tabActivite.includes(activity)){
+                                tabActivite.push(activity); // Ajouter l'activité au tableau des activités
+                                }
+                            
+                            }
+                        }
+                    });
+
+                    // Trier les activités par ordre alphabétique
+                    tabActivite.sort();
+
+                    // Ajouter chaque activité au <select>
+                    tabActivite.forEach(activity => {
+                        const optionItem = document.createElement('option');
+                        optionItem.value = activity;
+                        optionItem.textContent = activity;
+                        activitiesSelect.appendChild(optionItem);
+                    });
+                } else {
+                    const optionItem = document.createElement('option');
+                    optionItem.value = "";
+                    optionItem.textContent = "Aucune activité trouvée";
+                    activitiesSelect.appendChild(optionItem);
+                }
+            })
+            .catch(error => console.error('Erreur lors du chargement des données :', error));
+    </script>
+</body>
+</html>
+
+

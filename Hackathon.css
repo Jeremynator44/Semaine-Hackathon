@@ -1,0 +1,92 @@
+#map 
+{ 
+    height: 700px; 
+}
+
+li { list-style-type : none; }
+
+input[type=text] {
+  border: 2px solid #616161;
+  border-radius: 4px;
+  width: 10%;
+  padding: 12px 20px;
+  margin: 8px 0;
+}
+
+
+
+html {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  }
+  
+
+  
+  label {
+    margin-right: 15px;
+    line-height: 32px;
+  }
+  
+  input {
+    appearance: none;
+  
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+  
+    border: 2px solid #999;
+    transition: 0.2s all linear;
+    margin-right: 5px;
+  
+    position: relative;
+    top: 4px;
+  }
+  
+  input:checked {
+    border: 6px solid rgb(54, 121, 255);
+  }
+  
+  button,
+  legend {
+    color: white;
+    background-color: rgb(54, 121, 255);
+    padding: 6px 15px;
+    border-radius: 20px;
+    border: 0;
+    font-size: 17px;
+  }
+  
+  button:hover,
+  button:focus {
+    color: #999;
+  }
+  
+  button:active {
+    background-color: white;
+    color: rgb(54, 121, 255);
+    outline: 1px solid rgb(54, 121, 255);
+  }
+  
+
+  select {
+    padding: 10px;
+    width: 100%;
+    max-width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+select optgroup {
+    font-weight: bold;
+    color: #333;
+}
+
+select option {
+    padding: 10px;
+}
+
+:disabled {
+    color: #000000;
+}

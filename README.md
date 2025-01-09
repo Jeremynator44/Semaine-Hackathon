@@ -116,6 +116,7 @@ Ce projet a été développé avec l'aide d'outils de productivité comme ChatGP
 ## 📹 Vidéo de présentation
 
 Lien à ajouter ici : Vidéo de présentation
+https://www.youtube.com/watch?v=hjoI2F-c1Wo
 
 ---
 

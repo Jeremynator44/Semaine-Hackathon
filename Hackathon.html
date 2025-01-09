@@ -11,25 +11,25 @@
     <link rel="stylesheet" href="Hackathon.css">
 </head>
 <body>
-
-
-    <!--API Géolocalisation à ajouter-->
     <form>
         <fieldset>
             <legend>Lieu</legend>
             <div>
-                <input type="radio" id="Choix1" name="fav_language" value="velo" checked>
-                <label for="Choix1">Parkings vélos</label>
+                <input type="radio" id="Choix1" name="fav_language" value="installation" checked>
+                <label for="Choix1">Installations Sportives</label>
 
-                <input type="radio" id="Choix2" name="fav_language" value="voiture">
-                <label for="Choix2">Parkings voitures</label>
+                <input type="radio" id="Choix2" name="fav_language" value="velo">
+                <label for="Choix2">Parkings vélos</label>
 
-                <input type="radio" id="Choix3" name="fav_language" value="installation">
-                <label for="Choix3">Installations Sportives</label>
+                <input type="radio" id="Choix3" name="fav_language" value="voiture">
+                <label for="Choix3">Parkings voitures</label>
             </div>
         </fieldset>
     </form>
 
+    <select id="activities-select">
+        <option value="" disabled selected>Sélectionnez une activité</option>
+    </select>
 
     <div id="user-position">
         <h3>Renseignez votre position :</h3>
@@ -44,24 +44,9 @@
         <button id="update-map-btn">Valider</button>
     </div>
     <div id="map"></div>
-
-    <select>
-        <option value='' disabled selected>Tarif et Horaire</option>
-        <optgroup label='Prix' disabled selected>
-            <option disabled>record.tarif_1h</option>
-            <option disabled>record.tarif_2h</option>
-            <option disabled>record.tarif_3h</option>
-            <option disabled>record.tarif_4h</option>
-            <option disabled>record.tarif_24h</option>
-        </optgroup>
-        <optgroup label='Horaire' disabled selected>
-            <option disabled>"+ record.accessibilite +"</option>
-        </optgroup>
-    </select>
     
 
     <script>
-
         const MarqueurUser = L.icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png', // Icône rouge
             shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png', // Ombre du marqueur
@@ -107,8 +92,6 @@
             attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         });
         mainLayer.addTo(map)
-
-        
 
         // Fonction général pour ajouter des marqueurs quelque soit l'API
         function AjoutMarqueur (apiUrl){
@@ -212,6 +195,57 @@
                 .catch(error => console.error('Erreur lors du chargement des données :', error));
         }
 
+        // Création du tableau des activités
+        let tabActivite = [];
+
+        // Récupérer les données depuis l'API
+        fetch(apiUrlInstallations)
+            .then(response => response.json())
+            .then(data => {
+                const activitiesSelect = document.getElementById('activities-select');
+                
+                // Vérifier que des données sont disponibles
+                if (data.results && data.results.length > 0) {
+                    // Parcourir les enregistrements et extraire l'activité
+                    data.results.forEach(record => {
+                        const activity = record.activite; // Extraire l'activité
+                        
+
+                        // Vérifier que le champ "activite" existe, n'est pas vide et qu'il n'est pas déjà présent dans le tableau des activités
+                        if (activity) {
+                            const activities = activity.split(',');
+
+                            for (let i = 0; i < activities.length; i++) {
+                                const activity = activities[i].trim();
+                                if (!tabActivite.includes(activity)){
+                                tabActivite.push(activity); // Ajouter l'activité au tableau des activités
+                                }
+                            
+                            }
+                        }
+                    });
+
+                    // Trier les activités par ordre alphabétique
+                    tabActivite.sort();
+
+                    // Ajouter chaque activité au <select>
+                    tabActivite.forEach(activity => {
+                        const optionItem = document.createElement('option');
+                        optionItem.value = activity;
+                        optionItem.textContent = activity;
+                        activitiesSelect.appendChild(optionItem);
+                    });
+                } else {
+                    const optionItem = document.createElement('option');
+                    optionItem.value = "";
+                    optionItem.textContent = "Aucune activité trouvée";
+                    activitiesSelect.appendChild(optionItem);
+                }
+            })
+            .catch(error => console.error('Erreur lors du chargement des données :', error));
+
+
+
         // Fonction qui efface les anciens marqueurs
         function EnleverMarqueur() {
             map.eachLayer(layer => {
@@ -227,8 +261,9 @@
 
 
         // Fonction qui met à jour la carte en fonction du bouton radio sélectionné
-        function UpdateMap() {
+        function UpdateMapRadio() {
             let selectedValue;
+            // Gestion du changement pour les radios
             for (let radio of radios) {
                 if (radio.checked) {
                     selectedValue = radio.value;
@@ -236,6 +271,7 @@
                 }
             }
 
+            
             EnleverMarqueur(); // Effacer les anciens marqueurs
 
 
@@ -250,14 +286,36 @@
             }
         }
 
-        // Ajout d'écouteurs d'événements sur les boutons radio
-        for (let radio of radios) {
-            radio.addEventListener("change", UpdateMap);
+
+        // Fonction qui met à jour la carte en fonction du select sélectionné
+        function UpdateMapSelect() {
+            // Gestion du changement pour les select
+
+            
+            
+            EnleverMarqueur(); // Effacer les anciens marqueurs
+
+
+            // Appel la fonction AjoutMarqueur en fonction du bouton radio sélectionné
+
+            
         }
 
-        // Appel pour initialiser la carte avec les marqueurs par défaut (abris pour vélo)
-        UpdateMap();
+        // Ajout d'écouteurs d'événements sur les boutons radio
+        for (let radio of radios) {
+            radio.addEventListener("change", UpdateMapRadio);
+        }
+        
 
+        // Sélectionner l'élément select
+        const selectElement = document.querySelector('select');
+
+        // Ajouter un écouteur d'événement sur le select
+        selectElement.addEventListener("change", UpdateMapSelect);
+
+        // Appel pour initialiser la carte avec les marqueurs par défaut (abris pour vélo)
+        UpdateMapRadio();
+        UpdateMapSelect();
     </script>
 
     <script>
@@ -317,67 +375,6 @@
         }
 
         document.getElementById("update-map-btn").addEventListener("click", updateUserPosition);
-    </script>
-
-
-    <br>
-    <h1>Liste des Activités Sportives à Angers</h1>
-    <p>Voici les activités disponibles :</p>
-    <select id="activities-select">
-        <option value="" disabled selected>Sélectionnez une activité</option>
-    </select>
-
-    <script>
-
-        // Création du tableau des activités
-        let tabActivite = [];
-
-        // Récupérer les données depuis l'API
-        fetch(apiUrlInstallations)
-            .then(response => response.json())
-            .then(data => {
-                const activitiesSelect = document.getElementById('activities-select');
-                
-                // Vérifier que des données sont disponibles
-                if (data.results && data.results.length > 0) {
-                    // Parcourir les enregistrements et extraire l'activité
-                    data.results.forEach(record => {
-                        const activity = record.activite; // Extraire l'activité
-                        
-
-                        // Vérifier que le champ "activite" existe, n'est pas vide et qu'il n'est pas déjà présent dans le tableau des activités
-                        if (activity) {
-                            const activities = activity.split(',');
-                            console.log(activities);
-
-                            for (let i = 0; i < activities.length; i++) {
-                                const activity = activities[i].trim();
-                                if (!tabActivite.includes(activity)){
-                                tabActivite.push(activity); // Ajouter l'activité au tableau des activités
-                                }
-                            
-                            }
-                        }
-                    });
-
-                    // Trier les activités par ordre alphabétique
-                    tabActivite.sort();
-
-                    // Ajouter chaque activité au <select>
-                    tabActivite.forEach(activity => {
-                        const optionItem = document.createElement('option');
-                        optionItem.value = activity;
-                        optionItem.textContent = activity;
-                        activitiesSelect.appendChild(optionItem);
-                    });
-                } else {
-                    const optionItem = document.createElement('option');
-                    optionItem.value = "";
-                    optionItem.textContent = "Aucune activité trouvée";
-                    activitiesSelect.appendChild(optionItem);
-                }
-            })
-            .catch(error => console.error('Erreur lors du chargement des données :', error));
     </script>
 </body>
 </html>

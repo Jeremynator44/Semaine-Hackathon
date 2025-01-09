@@ -1,92 +1,118 @@
-#map 
-{ 
-    height: 700px; 
-}
 
-li { list-style-type : none; }
-
-input[type=text] {
-  border: 2px solid #616161;
-  border-radius: 4px;
-  width: 10%;
-  padding: 12px 20px;
-  margin: 8px 0;
-}
-
-
-
-html {
-    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
-  }
-  
-
-  
-  label {
-    margin-right: 15px;
-    line-height: 32px;
-  }
-  
-  input {
-    appearance: none;
-  
-    border-radius: 50%;
-    width: 16px;
-    height: 16px;
-  
-    border: 2px solid #999;
-    transition: 0.2s all linear;
-    margin-right: 5px;
-  
-    position: relative;
-    top: 4px;
-  }
-  
-  input:checked {
-    border: 6px solid rgb(54, 121, 255);
-  }
-  
-  button,
-  legend {
-    color: white;
-    background-color: rgb(54, 121, 255);
-    padding: 6px 15px;
-    border-radius: 20px;
-    border: 0;
-    font-size: 17px;
-  }
-  
-  button:hover,
-  button:focus {
-    color: #999;
-  }
-  
-  button:active {
-    background-color: white;
-    color: rgb(54, 121, 255);
-    outline: 1px solid rgb(54, 121, 255);
-  }
-  
-
-  select {
-    padding: 10px;
-    width: 100%;
-    max-width: 300px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-    font-size: 16px;
-    margin-top: 10px;
-}
-
-select optgroup {
-    font-weight: bold;
+/* Mise en page générale */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Trebuchet MS', Arial, sans-serif;
+    background-color: #f4f7fa;
     color: #333;
 }
 
-select option {
-    padding: 10px;
+header {
+    background-color: rgb(54, 121, 255);
+    color: white;
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-:disabled {
-    color: #000000;
+header h1 {
+    margin: 0;
+    font-size: 32px;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px auto;
+    max-width: 1100px;
+}
+
+form {
+    margin-bottom: 20px;
+    width: 100%;
+    max-width: 700px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+fieldset {
+    border: none;
+}
+
+legend {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+div.radio-group {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+div.radio-group label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+input[type="radio"] {
+    appearance: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #999;
+    transition: 0.2s all linear;
+    margin-right: 10px;
+    position: relative;
+}
+
+input[type="radio"]:checked {
+    border: 6px solid rgb(54, 121, 255);
+}
+
+#activities-select,
+input[type="text"],
+button {
+    margin: 10px 0;
+    width: 100%;
+    max-width: 400px;
+    padding: 12px;
+    font-size: 16px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+button {
+    background-color: rgb(54, 121, 255);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #355fa3;
+}
+
+#map {
+    width: 100%;
+    max-width: 1500px;
+    height: 700px;
+    margin: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+footer {
+    margin-top: 30px;
+    background-color: rgb(54, 121, 255);
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    font-size: 14px;
 }
